@@ -443,6 +443,17 @@ public class EnchCrackerWindow extends StyledFrameMinecraft {
 			});
 		});
 
+		JLabel direct = new JLabel(translate("enchCrack.directSeed"));
+		MCFont.setFontFor(direct);
+		direct.setBounds(0, 240, 140, 20);
+		findSeedPanel.add(direct);
+
+		FixedTextField directTextField = new FixedTextField();
+		directTextField.setFont(MCFont.standardFont);
+		directTextField.setBounds(0, 260, 102, 20);
+		directTextField.setToolTipText(translate("enchCrack.directSeed.tooltip"));
+		findSeedPanel.add(directTextField);
+
 		JLabel xpl1 = new JLabel(translate("enchCrack.xpSeed1"));
 		MCFont.setFontFor(xpl1);
 		xpl1.setBounds(0, 0, 140, 20);
@@ -469,32 +480,43 @@ public class EnchCrackerWindow extends StyledFrameMinecraft {
 
 		btnCalculate.setText(translate("enchCrack.calculate"));
 		btnCalculate.addActionListener(event -> {
-			boolean found;
+			boolean found = false;
 			int xpSeed1, xpSeed2;
-			try {
-				xpSeed1 = Integer.parseUnsignedInt(xpSeed1TextField.getText(), 16);
-			} catch (NumberFormatException e) {
-				Log.info("Calculate player seed failed, XP seed 1 invalid");
-				return;
-			}
-			try {
-				xpSeed2 = Integer.parseUnsignedInt(xpSeed2TextField.getText(), 16);
-			} catch (NumberFormatException e) {
-				Log.info("Calculate player seed failed, XP seed 2 invalid");
-				return;
-			}
-			Log.info("Calculating player seed with " + Integer.toHexString(xpSeed1) + ", "
-					+ Integer.toHexString(xpSeed2));
-			// Brute force the low bits
-			long seed1High = ((long) xpSeed1 << 16) & 0x0000_ffff_ffff_0000L;
-			long seed2High = ((long) xpSeed2 << 16) & 0x0000_ffff_ffff_0000L;
-			found = false;
-			for (int seed1Low = 0; seed1Low < 65536; seed1Low++) {
-				if ((((seed1High | seed1Low) * 0x5deece66dL + 0xb) & 0x0000_ffff_ffff_0000L) == seed2High) {
-					playerSeed = ((seed1High | seed1Low) * 0x5deece66dL + 0xb) & 0x0000_ffff_ffff_ffffL;
+			if (directTextField.getText().equals("")) {
+				try {
+					xpSeed1 = Integer.parseUnsignedInt(xpSeed1TextField.getText(), 16);
+				} catch (NumberFormatException e) {
+					Log.info("Calculate player seed failed, XP seed 1 invalid");
+					return;
+				}
+				try {
+					xpSeed2 = Integer.parseUnsignedInt(xpSeed2TextField.getText(), 16);
+				} catch (NumberFormatException e) {
+					Log.info("Calculate player seed failed, XP seed 2 invalid");
+					return;
+				}
+				Log.info("Calculating player seed with " + Integer.toHexString(xpSeed1) + ", "
+						+ Integer.toHexString(xpSeed2));
+				// Brute force the low bits
+				long seed1High = ((long) xpSeed1 << 16) & 0x0000_ffff_ffff_0000L;
+				long seed2High = ((long) xpSeed2 << 16) & 0x0000_ffff_ffff_0000L;
+				found = false;
+				for (int seed1Low = 0; seed1Low < 65536; seed1Low++) {
+					if ((((seed1High | seed1Low) * 0x5deece66dL + 0xb) & 0x0000_ffff_ffff_0000L) == seed2High) {
+						playerSeed = ((seed1High | seed1Low) * 0x5deece66dL + 0xb) & 0x0000_ffff_ffff_ffffL;
+						foundPlayerSeed = true;
+						found = true;
+						break;
+					}
+				}
+			} else {
+				try {
+					playerSeed = Long.parseLong(directTextField.getText(), 16);
 					foundPlayerSeed = true;
 					found = true;
-					break;
+				} catch (NumberFormatException e) {
+					Log.info("Invalid Direct Player Seed " + directTextField.getText());
+					return;
 				}
 			}
 			if (found) {
